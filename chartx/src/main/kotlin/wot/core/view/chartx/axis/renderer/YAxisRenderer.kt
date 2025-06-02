@@ -17,7 +17,7 @@ class YAxisRenderer : BaseAxisRenderer() {
      */
     var margin = 8F
 
-    override fun initLabel(rectF: RectF) {
+    override fun onCalcLabel(rectF: RectF) {
         paint.reset()
         paint.textSize = labelTextSize
 
@@ -35,7 +35,7 @@ class YAxisRenderer : BaseAxisRenderer() {
         }
     }
 
-    override fun onDraw(canvas: Canvas) {
+    override fun onDrawLabel(canvas: Canvas) {
         paint.reset()
         paint.color = labelTextColor
         paint.textSize = labelTextSize

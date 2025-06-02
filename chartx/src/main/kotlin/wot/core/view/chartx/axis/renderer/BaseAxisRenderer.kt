@@ -12,7 +12,7 @@ import wot.core.view.chartx.axis.model.AxisLabel
  * @author : yangsn
  * @date : 2025/5/29
  */
-abstract class BaseAxisRenderer() {
+abstract class BaseAxisRenderer : IBaseAxisRenderer {
 
     protected val paint: Paint by lazy { Paint() }
 
@@ -21,14 +21,48 @@ abstract class BaseAxisRenderer() {
     var labelTextColor: Int = Color.BLACK
 
     /**
-     * 初始化坐标标签
+     * 更新坐标轴的显示指标(坐标值、)
      * @param rectF 坐标轴区域
      */
-    abstract fun initLabel(rectF: RectF)
+    override fun updateMetrics(rectF: RectF) {
+        onCalcLabel(rectF)
+    }
 
-    abstract fun onDraw(canvas: Canvas)
+    override fun onDraw(canvas: Canvas) {
+        onDrawLabel(canvas)
+    }
 
-    fun addLabels(vararg label: AxisLabel) {
+    override fun addLabels(vararg label: AxisLabel) {
         labelList.addAll(label)
     }
+
+    /**
+     * 计算坐标标签
+     * @param rectF 坐标轴区域
+     */
+    abstract fun onCalcLabel(rectF: RectF)
+
+    /**
+     * 绘制标签
+     */
+    abstract fun onDrawLabel(canvas: Canvas)
+}
+
+interface IBaseAxisRenderer {
+
+    /**
+     * 更新坐标轴的显示指标(坐标值、)
+     * @param rectF 坐标轴区域
+     */
+    fun updateMetrics(rectF: RectF)
+
+    /**
+     * 绘制数据
+     */
+    fun onDraw(canvas: Canvas)
+
+    /**
+     * 增加标签
+     */
+    fun addLabels(vararg label: AxisLabel)
 }

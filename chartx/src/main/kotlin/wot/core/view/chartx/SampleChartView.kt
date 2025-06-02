@@ -1,13 +1,16 @@
 package wot.core.view.chartx
 
 import android.content.Context
+import android.graphics.Color
 import android.util.AttributeSet
 import wot.core.view.chartx.axis.XAxis
 import wot.core.view.chartx.axis.YAxis
 import wot.core.view.chartx.axis.model.AxisLabel
 import wot.core.view.chartx.axis.renderer.XAxisRenderer
 import wot.core.view.chartx.axis.renderer.YAxisRenderer
-import wot.core.view.chartx.model.ChartPanel
+import wot.core.view.chartx.model.Panel
+import wot.core.view.chartx.model.Viewport
+import wot.core.view.chartx.renderer.LineDataRenderer
 
 /**
  * 测试用示例控件
@@ -18,9 +21,10 @@ import wot.core.view.chartx.model.ChartPanel
 class SampleChartView(context: Context, attrs: AttributeSet? = null) :
     BaseChartView(context, attrs) {
 
-    override fun createChartPanel(): MutableList<ChartPanel> {
+    override fun createPanels(viewport: Viewport): MutableList<Panel> {
         return mutableListOf(
-            ChartPanel(
+            Panel(viewport).apply {
+                addRenderers(LineDataRenderer(), LineDataRenderer(Color.RED))
                 yAxis = YAxis(YAxisRenderer().apply {
                     addLabels(
                         AxisLabel(0f, "10"),
@@ -29,7 +33,7 @@ class SampleChartView(context: Context, attrs: AttributeSet? = null) :
                         AxisLabel(0.75F, "40"),
                         AxisLabel(1F, "50")
                     )
-                }, 50F),
+                })
                 xAxis = XAxis(XAxisRenderer().apply {
                     addLabels(
                         AxisLabel(0f, "10"),
@@ -38,17 +42,23 @@ class SampleChartView(context: Context, attrs: AttributeSet? = null) :
                         AxisLabel(0.75F, "40"),
                         AxisLabel(1F, "50")
                     )
-                }, 50F),
-                dataRenderer = SampleDataRenderer(),
-            )
+                })
+            }
         )
     }
 
-    override fun onSizeChanged(
-        panelList: MutableList<ChartPanel>,
+    override fun updatePanelBounds(
+        panelList: MutableList<Panel>,
         viewWidth: Int,
         viewHeight: Int
     ) {
-        panelList[0].setBounds(0f, 0f, viewWidth.toFloat(), viewHeight.toFloat())
+        panelList[0].setBounds(
+            0f,
+            0f,
+            viewWidth.toFloat(),
+            viewHeight.toFloat(),
+            paddingBottom.toFloat(),
+            paddingLeft.toFloat()
+        )
     }
 }

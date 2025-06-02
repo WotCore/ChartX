@@ -14,7 +14,7 @@ import wot.core.view.chartx.ext.centerY
  */
 class XAxisRenderer : BaseAxisRenderer() {
 
-    override fun initLabel(rectF: RectF) {
+    override fun onCalcLabel(rectF: RectF) {
         paint.reset()
         paint.color = labelTextColor
         paint.textSize = labelTextSize
@@ -30,7 +30,7 @@ class XAxisRenderer : BaseAxisRenderer() {
         }
     }
 
-    override fun onDraw(canvas: Canvas) {
+    override fun onDrawLabel(canvas: Canvas) {
         paint.reset()
         paint.color = labelTextColor
         paint.textSize = labelTextSize

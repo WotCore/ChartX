@@ -10,25 +10,24 @@ import wot.core.view.chartx.axis.renderer.BaseAxisRenderer
  * @author : yangsn
  * @date : 2025/5/29
  */
-class XAxis(renderer: BaseAxisRenderer, height: Float) : BaseAxis(renderer, height = height) {
+class XAxis(renderer: BaseAxisRenderer) : BaseAxis(renderer) {
 
-    override fun setBounds(contentRectF: RectF) {
-        width = contentRectF.width()
+    override fun setBounds(contentRectF: RectF, axisSize: Float) {
         rectF.set(
             contentRectF.left,
             contentRectF.bottom,
             contentRectF.right,
-            contentRectF.bottom + height
+            contentRectF.bottom + axisSize
         )
 
-        renderer.initLabel(rectF)
-    }
-
-    override fun notifyDataChanged() {
-        renderer.initLabel(rectF)
+        renderer.updateMetrics(rectF)
     }
 
     override fun onDraw(canvas: Canvas) {
         renderer.onDraw(canvas)
+    }
+
+    override fun updateMetrics() {
+        renderer.updateMetrics(rectF)
     }
 }
