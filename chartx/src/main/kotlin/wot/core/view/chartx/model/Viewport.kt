@@ -55,6 +55,30 @@ class Viewport {
     }
 
     /**
+     * 根据用户在图表中的水平滑动距离，平移当前可见的数据范围。
+     *
+     * - 向右滑动（moveX > 0）：查看更早的数据，前移数据窗口。
+     * - 向左滑动（moveX < 0）：查看更新的数据，后移数据窗口。
+     *
+     * 自动处理索引边界，避免越界。
+     *
+     * @param moveX 水平方向滑动的距离（单位：像素）
+     */
+    fun panVisibleRange(moveX: Float) {
+        val moveCount = (moveX / pointMaxWidth).toInt()
+
+        if (moveCount > 0) {
+            // 向右滑动，显示更早的数据
+            startIndex = (startIndex - moveCount).coerceAtLeast(0)
+            calcEndIndex()
+        } else if (moveCount < 0) {
+            // 向左滑动，显示更新的数据
+            endIndex = (endIndex - moveCount).coerceAtMost(maxIndex)
+            calcStartIndex()
+        }
+    }
+
+    /**
      * 计算最大可见点数
      */
     private fun calcMaxVisiblePoints() {

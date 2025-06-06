@@ -4,10 +4,15 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.util.AttributeSet
+import android.util.Log
+import android.view.MotionEvent
 import android.view.View
 import wot.core.view.chartx.model.ChartEntry
 import wot.core.view.chartx.model.Panel
 import wot.core.view.chartx.model.Viewport
+import wot.core.view.chartx.touch.GestureDirection
+import wot.core.view.chartx.touch.GestureHandler
+import wot.core.view.chartx.touch.OnGestureListener
 
 /**
  * 图表基类
@@ -18,9 +23,15 @@ import wot.core.view.chartx.model.Viewport
  */
 abstract class BaseChartView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
-) : View(context, attrs, defStyleAttr) {
+) : View(context, attrs, defStyleAttr), OnGestureListener {
 
     private val viewport by lazy { Viewport() }
+
+    private val gestureHandler by lazy {
+        GestureHandler().apply {
+            onGestureListener = this@BaseChartView
+        }
+    }
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
@@ -50,6 +61,20 @@ abstract class BaseChartView @JvmOverloads constructor(
         super.onDraw(canvas)
         // 绘制元素
         panelList.forEach { it.drawElements(canvas, paint) }
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        return gestureHandler.handleTouchEvent(event, this)
+    }
+
+    override fun onMove(x: Float, y: Float, dx: Float, dy: Float, direction: GestureDirection) {
+        Log.d("BaseChartView", "onMove: x=$x, y=$y, dx=$dx, dy=$dy, direction=$direction")
+        viewport.panVisibleRange(dx)
+        invalidate()
+    }
+
+    override fun onScale(scaleFactor: Float, focusX: Float, focusY: Float) {
+        Log.d("BaseChartView", "onScale: scaleFactor=$scaleFactor, focusX=$focusX, focusY=$focusY")
     }
 
     /**
