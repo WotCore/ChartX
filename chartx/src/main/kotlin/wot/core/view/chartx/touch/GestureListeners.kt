@@ -1,12 +1,16 @@
 package wot.core.view.chartx.touch
 
 /**
- * 功能说明
+ * 手势监听类
  *
  * @author : yangsn
  * @date : 2025/6/6
  */
-interface OnGestureListener {
+
+/**
+ * 触摸事件
+ */
+interface OnTouchListener {
 
     /**
      * 用户按下手指（单指）时触发。
@@ -24,9 +28,9 @@ interface OnGestureListener {
      * @param x 当前触点的 X 坐标
      * @param y 当前触点的 Y 坐标
      * @param deltaX 与上一次移动的 X 偏移量（正为右，负为左）
-     * @param direction 当前移动的方向（左、右、无）
+     * @param deltaY 与上一次移动的 Y 偏移量
      */
-    fun onMove(x: Float, y: Float, dx: Float, dy: Float, direction: GestureDirection) {}
+    fun onMove(x: Float, y: Float, deltaX: Float, deltaY: Float) {}
 
     /**
      * 手指抬起时触发（仅在非缩放状态下）。
@@ -36,18 +40,12 @@ interface OnGestureListener {
      * @param y 当前触点的 Y 坐标
      */
     fun onUp(x: Float, y: Float) {}
+}
 
-    /**
-     * 判断为向左滑动（快速滑动且距离大于阈值）时触发。
-     * 用于触发“翻页”、“删除”等操作。
-     */
-    fun onSwipeLeft() {}
-
-    /**
-     * 判断为向右滑动（快速滑动且距离大于阈值）时触发。
-     * 用于触发“返回”、“点赞”等操作。
-     */
-    fun onSwipeRight() {}
+/**
+ * 双指缩放
+ */
+interface OnScaleListener {
 
     /**
      * 双指缩放时持续触发，返回缩放比例。
@@ -58,6 +56,12 @@ interface OnGestureListener {
      * @param focusY 两指中点的 Y 坐标
      */
     fun onScale(scaleFactor: Float, focusX: Float, focusY: Float) {}
+}
+
+/**
+ * 双击事件
+ */
+interface OnDoubleTapListener {
 
     /**
      * 双击事件回调。
@@ -67,6 +71,12 @@ interface OnGestureListener {
      * @param y 双击时触点的 Y 坐标
      */
     fun onDoubleTap(x: Float, y: Float) {}
+}
+
+/**
+ * 长按事件
+ */
+interface OnLongPressListener {
 
     /**
      * 长按事件回调。
@@ -76,22 +86,4 @@ interface OnGestureListener {
      * @param y 长按时触点的 Y 坐标
      */
     fun onLongPress(x: Float, y: Float) {}
-
-    /**
-     * 快速滑动（甩动）事件回调。
-     * 当用户快速滑动屏幕，手指离开时触发，通常用于实现惯性滚动、快速翻页等效果。
-     *
-     * @param velocityX X 方向上的滑动速度（像素/秒，正为向右，负为向左）
-     * @param velocityY Y 方向上的滑动速度（像素/秒，正为向下，负为向上）
-     */
-    fun onFling(velocityX: Float, velocityY: Float) {}
-
-    /**
-     * 拖动时，当前阻尼后的偏移量，供外部更新UI用
-     */
-    fun onDragWithDamping(offsetX: Float, offsetY: Float) {}
-    /**
-     * 回弹动画更新时，回调当前位置
-     */
-    fun onBounceBack(progressX: Float, progressY: Float) {}
 }

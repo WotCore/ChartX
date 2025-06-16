@@ -3,6 +3,7 @@ package wot.core.view.chartx.renderer
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
+import wot.core.view.chartx.log.Logcat
 import wot.core.view.chartx.model.RenderContext
 import kotlin.math.max
 import kotlin.math.min
@@ -32,12 +33,10 @@ abstract class BaseDataRenderer {
      * @param canvas 画布
      * @param paint 画笔
      * @param contentRectF 内容区域
-     * @param pointWidth 点的宽度
      * @param renderContext 渲染上下文
      */
     abstract fun onDraw(
-        canvas: Canvas, paint: Paint, contentRectF: RectF, pointWidth: Float,
-        renderContext: RenderContext
+        canvas: Canvas, paint: Paint, contentRectF: RectF, renderContext: RenderContext
     )
 
     /**
@@ -46,5 +45,6 @@ abstract class BaseDataRenderer {
     fun calcRenderRange(panelStartIndex: Int, panelEndIndex: Int, entryMaxIndex: Int) {
         this.startIndex = max(panelStartIndex, 0)
         this.endIndex = min(panelEndIndex, entryMaxIndex)
+        Logcat.i("startIndex = $startIndex, endIndex = $endIndex")
     }
 }

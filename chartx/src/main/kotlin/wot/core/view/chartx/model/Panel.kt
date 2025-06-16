@@ -5,6 +5,7 @@ import android.graphics.Paint
 import android.graphics.RectF
 import wot.core.view.chartx.axis.XAxis
 import wot.core.view.chartx.axis.YAxis
+import wot.core.view.chartx.log.Logcat
 import wot.core.view.chartx.renderer.BaseDataRenderer
 
 /**
@@ -62,14 +63,14 @@ data class Panel(val viewport: Viewport) {
         xAxis?.onDraw(canvas)
         yAxis?.onDraw(canvas)
 
+        val panelStartIndex = viewport.startIndex
+        val panelEndIndex = viewport.endIndex
         renderContextList.forEach {
+            it.prepareValueToPxMatrix(contentRectF, panelStartIndex, viewport.getPointRealWidth())
             // 先计算渲染实际索引
-            val startIndex = viewport.startIndex
-            val endIndex = viewport.endIndex
-            it.renderer.calcRenderRange(startIndex, endIndex, it.entryMaxIndex())
+            it.renderer.calcRenderRange(panelStartIndex, panelEndIndex, it.entryMaxIndex())
             // 再进行绘制
-            val pointWidth = viewport.pointMaxWidth
-            it.renderer.onDraw(canvas, paint, contentRectF, pointWidth, it)
+            it.renderer.onDraw(canvas, paint, contentRectF, it)
         }
     }
 

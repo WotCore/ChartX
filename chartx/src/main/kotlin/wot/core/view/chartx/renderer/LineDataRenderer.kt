@@ -24,7 +24,6 @@ class LineDataRenderer(var lineColor: Int = Color.BLUE) : BaseDataRenderer() {
         canvas: Canvas,
         paint: Paint,
         contentRectF: RectF,
-        pointWidth: Float,
         renderContext: RenderContext
     ) {
         val entries = renderContext.entryList

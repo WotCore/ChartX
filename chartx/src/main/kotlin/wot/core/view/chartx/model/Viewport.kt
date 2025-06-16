@@ -1,5 +1,7 @@
 package wot.core.view.chartx.model
 
+import wot.core.view.chartx.log.Logcat
+
 /**
  * 功能说明
  *
@@ -55,6 +57,13 @@ class Viewport {
     }
 
     /**
+     * 获取点的真实宽度
+     */
+    fun getPointRealWidth(): Float {
+        return pointMaxWidth
+    }
+
+    /**
      * 根据用户在图表中的水平滑动距离，平移当前可见的数据范围。
      *
      * - 向右滑动（moveX > 0）：查看更早的数据，前移数据窗口。
@@ -65,8 +74,21 @@ class Viewport {
      * @param moveX 水平方向滑动的距离（单位：像素）
      */
     fun panVisibleRange(moveX: Float) {
-        val moveCount = (moveX / pointMaxWidth).toInt()
+        panVisibleRange((moveX / pointMaxWidth).toInt())
+    }
 
+    /**
+     * 平移当前可见的数据范围。
+     *
+     * - 向右滑动（moveCount > 0）：查看更早的数据，前移数据窗口。
+     * - 向左滑动（moveCount < 0）：查看更新的数据，后移数据窗口。
+     *
+     * 自动处理索引边界，避免越界。
+     *
+     * @param moveCount 移动点数
+     */
+    fun panVisibleRange(moveCount: Int) {
+        Logcat.d("$this -> moveCount: $moveCount, maxIndex: $maxIndex, maxVisiblePoints: $maxVisiblePoints")
         if (moveCount > 0) {
             // 向右滑动，显示更早的数据
             startIndex = (startIndex - moveCount).coerceAtLeast(0)
@@ -76,6 +98,7 @@ class Viewport {
             endIndex = (endIndex - moveCount).coerceAtMost(maxIndex)
             calcStartIndex()
         }
+        Logcat.i("$this -> startIndex: $startIndex, endIndex: $endIndex")
     }
 
     /**
@@ -100,7 +123,7 @@ class Viewport {
      * 计算开始索引
      */
     private fun calcStartIndex() {
-        startIndex = maxIndex - maxVisiblePoints + 1
+        startIndex = endIndex - maxVisiblePoints + 1
         // 限制边界
         if (startIndex < 0) {
             startIndex = 0
