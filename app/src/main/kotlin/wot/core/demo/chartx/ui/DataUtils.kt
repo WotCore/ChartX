@@ -26,7 +26,7 @@ object DataUtils {
     }
 
     fun chatData(
-        times: Int = 40,
+        times: Int = 180,
         min: Float = 9.5F,
         max: Float = 10.5F,
     ): MutableList<ChartEntry> {
