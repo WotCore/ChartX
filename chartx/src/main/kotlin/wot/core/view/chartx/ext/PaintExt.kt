@@ -20,6 +20,7 @@ fun Paint.centerY(rectF: RectF): Float {
 /**
  * 计算文字宽度（使用 measureText）
  */
-fun Paint.textWidth(text: String): Float {
+fun Paint.textWidth(text: String?): Float {
+    text ?: return 0F
     return measureText(text)
 }

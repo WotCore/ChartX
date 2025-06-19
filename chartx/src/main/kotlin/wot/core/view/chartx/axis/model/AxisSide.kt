@@ -6,4 +6,4 @@ package wot.core.view.chartx.axis.model
  * @author : yangsn
  * @date : 2025/6/16
  */
-enum class AxisSide { TOP, BOTTOM, LEFT, RIGHT }
+enum class AxisSide { LEFT, TOP, RIGHT, BOTTOM }

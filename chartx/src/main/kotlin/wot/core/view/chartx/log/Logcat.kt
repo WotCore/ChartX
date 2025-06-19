@@ -1,5 +1,7 @@
 package wot.core.view.chartx.log
 
+import android.util.Log
+
 /**
  * 日志输出
  *
@@ -11,10 +13,14 @@ object Logcat {
     private const val TAG = "ChartX"
 
     fun i(msg: String) {
-        android.util.Log.i(TAG, msg)
+        Log.i(TAG, msg)
     }
 
     fun d(msg: String) {
-        android.util.Log.d(TAG, msg)
+        Log.d(TAG, msg)
+    }
+
+    fun w(msg: String) {
+        Log.w(TAG, msg)
     }
 }

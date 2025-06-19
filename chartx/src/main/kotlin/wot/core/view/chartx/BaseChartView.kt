@@ -15,6 +15,7 @@ import wot.core.view.chartx.touch.OnTouchListener
 /**
  * 图表基类
  * 1. 将控件分成多份面板, 每份面板单独绘制
+ * 2. 不考虑 padding
  *
  * @author : yangsn
  * @date : 2025/5/28
@@ -43,20 +44,21 @@ abstract class BaseChartView @JvmOverloads constructor(
     abstract fun createChartPanels(viewport: ChartViewport): MutableList<ChartPanel>
 
     /**
-     * 更新面板边界
-     * @param chartPanelList 面板列表
-     * @param viewWidth 控件宽度
-     * @param viewHeight 控件高度
+     * 更新面板边界，并返回一个内容宽度。（因为涉及到坐标轴宽度，所以从这里获取）。
+     * @param chartPanelList 面板列表。
+     * @param viewWidth 控件宽度。
+     * @param viewHeight 控件高度。
+     * @return 返回一个内容宽度，提供给 [ChartViewport] 计算索引等。
      */
     abstract fun updateChartPanelBounds(
         chartPanelList: MutableList<ChartPanel>, viewWidth: Int, viewHeight: Int
-    )
+    ): Float
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        viewport.setContentWidth(w.toFloat() - paddingStart - paddingEnd)
         // 更新面板边界
-        updateChartPanelBounds(panelList, w, h)
+        val contentWidth = updateChartPanelBounds(panelList, w, h)
+        viewport.setContentWidth(contentWidth)
     }
 
     override fun onDraw(canvas: Canvas) {
