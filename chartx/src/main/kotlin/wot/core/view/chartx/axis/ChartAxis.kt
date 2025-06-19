@@ -4,6 +4,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.PathEffect
 import android.graphics.RectF
 import wot.core.view.chartx.axis.formatter.AxisLabelFormatter
 import wot.core.view.chartx.axis.model.AxisLabel
@@ -55,7 +56,9 @@ class ChartAxis(
             style = Paint.Style.STROKE
         }
     }
+
     private val linePath by lazy { Path() }
+    var linePathEffect: PathEffect? = null
     var lineWidth = 3F
     var lineColor = Color.parseColor("#F0F0F0")
     private val lineList by lazy { mutableListOf<AxisLine>() }
@@ -143,41 +146,55 @@ class ChartAxis(
      */
     private fun prepareLines() {
         val bounds = panelContentBounds ?: return
+
         linePaint.style = Paint.Style.STROKE
         linePaint.strokeWidth = lineWidth
 
-        lineList.forEach {
-            if (axisSide == AxisSide.LEFT || axisSide == AxisSide.RIGHT) {
-                // 左边和右边是 Y 轴，所以绘制的是水平方向的线
-                val y = bounds.bottom - bounds.height() * it.ratio
-                it.startPoint.x = bounds.left
-                it.startPoint.y = y
-                it.endPoint.x = bounds.right
-                it.endPoint.y = y
-            } else {
-                // 上边和下边是 X 轴，所以绘制的是垂直方向的线
-                val x = (bounds.left + bounds.width() * it.ratio)
-                it.startPoint.x = x
-                it.startPoint.y = bounds.top
-                it.endPoint.x = x
-                it.endPoint.y = bounds.bottom
+        val left = bounds.left
+        val right = bounds.right
+        val top = bounds.top
+        val bottom = bounds.bottom
+        val width = bounds.width()
+        val height = bounds.height()
+
+        for (line in lineList) {
+            when (axisSide) {
+                AxisSide.LEFT, AxisSide.RIGHT -> {
+                    // Y轴方向，画水平线
+                    val y = bottom - height * line.ratio
+                    line.startPoint.set(left, y)
+                    line.endPoint.set(right, y)
+                }
+
+                AxisSide.TOP, AxisSide.BOTTOM -> {
+                    // X轴方向，画垂直线
+                    val x = left + width * line.ratio
+                    line.startPoint.set(x, top)
+                    line.endPoint.set(x, bottom)
+                }
             }
         }
     }
 
     /**
-     * 绘制轴线 [lineList]
+     * 绘制虚线轴线 [lineList]
      */
     private fun Canvas.drawLines() {
-        linePaint.style = Paint.Style.STROKE
-        linePaint.strokeWidth = lineWidth
-        linePaint.color = lineColor
-        lineList.forEach {
+        linePaint.apply {
+            style = Paint.Style.STROKE
+            strokeWidth = lineWidth
+            color = lineColor
+            pathEffect = linePathEffect
+        }
+
+        for (line in lineList) {
             linePath.reset()
-            linePath.moveTo(it.startPoint.x, it.startPoint.y)
-            linePath.lineTo(it.endPoint.x, it.endPoint.y)
+            linePath.moveTo(line.startX(), line.startY())
+            linePath.lineTo(line.endX(), line.endY())
             drawPath(linePath, linePaint)
         }
+
+        linePaint.pathEffect = null // 清除 pathEffect，避免影响后续绘制
     }
 
     // ========== 标签相关 ==========
@@ -200,32 +217,42 @@ class ChartAxis(
 
         val descent = paint.descent()
         val ascent = paint.ascent()
-        val x = if (axisSide == AxisSide.LEFT) {
-            if (axisPosition == AxisPosition.INSIDE) {
+
+        // 计算标签的横向位置 x
+        val x = when (axisSide) {
+            AxisSide.LEFT -> if (axisPosition == AxisPosition.INSIDE) {
                 axisBounds.left + horizontalMargin
             } else {
                 axisBounds.right - horizontalMargin
             }
-        } else {
-            if (axisPosition == AxisPosition.INSIDE) {
+
+            AxisSide.RIGHT -> if (axisPosition == AxisPosition.INSIDE) {
                 axisBounds.right - horizontalMargin
             } else {
                 axisBounds.left + horizontalMargin
             }
+
+            else -> axisBounds.left + horizontalMargin // 容错处理
         }
-        labelList.forEach {
-            val ratio = it.ratio
-            val axisValue = axisBounds.height() * ratio
-            if (it.isNeedCalculateText()) {
-                it.text = formatter?.format(axisSide, axisPosition, axisValue) ?: "$axisValue"
+
+        val totalHeight = axisBounds.height()
+        val bottom = axisBounds.bottom
+        for (label in labelList) {
+            val ratio = label.ratio
+            val value = totalHeight * ratio
+
+            if (label.isNeedCalculateText()) {
+                label.text = formatter?.format(axisSide, axisPosition, value) ?: "$value"
             }
-            val y = axisBounds.bottom - axisValue
-            it.y = when {
-                ratio <= 0F -> y - descent // 顶部对齐
-                ratio >= 1F -> y - ascent // 底部对齐
-                else -> y - (ascent + descent) / 2 // 垂直居中
+
+            val y = bottom - value
+            label.y = when {
+                ratio <= 0f -> y - descent            // 顶部对齐
+                ratio >= 1f -> y - ascent             // 底部对齐
+                else -> y - (ascent + descent) / 2f   // 居中对齐
             }
-            it.x = x
+
+            label.x = x
         }
     }
 

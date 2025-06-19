@@ -13,4 +13,12 @@ data class AxisLine(val ratio: Float) {
     val startPoint by lazy { PointF() }
 
     val endPoint by lazy { PointF() }
+
+    fun startX() = startPoint.x
+
+    fun startY() = startPoint.y
+
+    fun endX() = endPoint.x
+
+    fun endY() = endPoint.y
 }
