@@ -1,4 +1,4 @@
-package wot.core.view.chartx.model
+package wot.core.view.chartx.model.viewport
 
 import wot.core.view.chartx.log.Logcat
 

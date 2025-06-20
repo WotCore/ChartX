@@ -4,18 +4,18 @@ import wot.core.view.chartx.axis.model.AxisPosition
 import wot.core.view.chartx.axis.model.AxisSide
 
 /**
- * 图表轴值格式化
+ * 图表轴值格式化 [AxisSide.LEFT] or [AxisSide.RIGHT]
  *
  * @author : yangsn
  * @date : 2025/6/16
  */
-interface AxisLabelFormatter {
+interface YAxisLabelFormatter : IAxisLabelFormatter {
 
     /**
      * 格式化轴值
-     * @param side 轴所在侧
+     * @param axisSide 轴所在侧
      * @param axisPosition 轴所在位置
-     * @param value 轴值
+     * @param axisValue 轴值
      */
-    fun format(side: AxisSide, axisPosition: AxisPosition, value: Float): String
+    fun format(axisSide: AxisSide, axisPosition: AxisPosition, axisValue: Float): String
 }

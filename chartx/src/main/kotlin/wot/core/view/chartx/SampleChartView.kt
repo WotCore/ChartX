@@ -4,14 +4,15 @@ import android.content.Context
 import android.graphics.Color
 import android.util.AttributeSet
 import wot.core.view.chartx.axis.ChartAxis
-import wot.core.view.chartx.axis.formatter.AxisLabelFormatter
+import wot.core.view.chartx.axis.formatter.XAxisLabelFormatter
 import wot.core.view.chartx.axis.model.AxisLabel
 import wot.core.view.chartx.axis.model.AxisLine
 import wot.core.view.chartx.axis.model.AxisPosition
 import wot.core.view.chartx.axis.model.AxisSide
-import wot.core.view.chartx.model.ChartPanel
-import wot.core.view.chartx.model.ChartViewport
-import wot.core.view.chartx.renderer.LineDataRenderer
+import wot.core.view.chartx.model.panel.ChartPanel
+import wot.core.view.chartx.model.renderer.BaseDataRenderer
+import wot.core.view.chartx.model.renderer.LineDataRenderer
+import wot.core.view.chartx.model.viewport.ChartViewport
 
 /**
  * 测试用示例控件
@@ -25,6 +26,8 @@ class SampleChartView(context: Context, attrs: AttributeSet? = null) :
     override fun createChartPanels(viewport: ChartViewport): MutableList<ChartPanel> {
         return mutableListOf(
             ChartPanel(viewport).apply {
+                val xRenderers = LineDataRenderer()
+                addDataRenderers(xRenderers, LineDataRenderer(Color.RED))
                 addAxis(
                     ChartAxis(AxisSide.LEFT, AxisPosition.OUTSIDE, 60F).apply {
                         addLabels(
@@ -60,12 +63,15 @@ class SampleChartView(context: Context, attrs: AttributeSet? = null) :
                             AxisLine(1F)
                         )
 
-                        formatter = object : AxisLabelFormatter {
+                        formatter = object : XAxisLabelFormatter {
+                            override fun provideDataRenderer(): BaseDataRenderer {
+                                return xRenderers
+                            }
 
                             override fun format(
-                                side: AxisSide, axisPosition: AxisPosition, value: Float
+                                axisSide: AxisSide, axisPosition: AxisPosition, value: String
                             ): String {
-                                return "$value"
+                                return value
                             }
                         }
                     },
@@ -146,15 +152,14 @@ class SampleChartView(context: Context, attrs: AttributeSet? = null) :
 //                        }
 //                    }
                 )
-                addDataRenderers(LineDataRenderer(), LineDataRenderer(Color.RED))
             }
         )
     }
 
-    override fun updateChartPanelBounds(
-        chartPanelList: MutableList<ChartPanel>, viewWidth: Int, viewHeight: Int
+    override fun setPanelBounds(
+        panelList: MutableList<ChartPanel>, viewWidth: Int, viewHeight: Int
     ): Float {
-        val panel = chartPanelList[0]
+        val panel = panelList[0]
         panel.setBounds(0f, 0f, viewWidth.toFloat(), viewHeight.toFloat())
         return panel.getContentWidth()
     }

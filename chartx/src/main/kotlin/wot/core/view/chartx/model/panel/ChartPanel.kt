@@ -1,4 +1,4 @@
-package wot.core.view.chartx.model
+package wot.core.view.chartx.model.panel
 
 import android.graphics.Canvas
 import android.graphics.Paint
@@ -7,7 +7,9 @@ import wot.core.view.chartx.axis.ChartAxis
 import wot.core.view.chartx.axis.model.AxisPosition
 import wot.core.view.chartx.axis.model.AxisSide
 import wot.core.view.chartx.log.Logcat
-import wot.core.view.chartx.renderer.BaseDataRenderer
+import wot.core.view.chartx.model.data.ChartEntry
+import wot.core.view.chartx.model.renderer.BaseDataRenderer
+import wot.core.view.chartx.model.viewport.ChartViewport
 
 /**
  * 图表面板
@@ -57,22 +59,25 @@ data class ChartPanel(val viewport: ChartViewport) {
         axisList.forEach {
             it.setBounds(contentBounds)
         }
+    }
 
-        updateIndexRange() // 刷新索引范围
+    /**
+     * 绘制之前的一些工作
+     */
+    fun prepareToDraw() {
+        dataRendererList.forEach { renderer ->
+            viewport.updateMaxIndex(renderer.lastIndex())   // 更新最大索引
+            renderer.prepareToDraw(viewport, contentBounds) // 渲染器的准备工作
+        }
+        axisList.forEach { it.prepareToDraw() } // 坐标的准备工作
     }
 
     /**
      * 绘制图表元素
      */
-    fun drawChartElements(canvas: Canvas, paint: Paint) {
-        axisList.forEach {
-            it.startDraw(canvas)
-        }
-
-        val pointRealWidth = viewport.getPointRealWidth()
-        dataRendererList.forEach {
-            it.startRenderer(canvas, paint, viewport, contentBounds, pointRealWidth)
-        }
+    fun startDraw(canvas: Canvas, paint: Paint) {
+        axisList.forEach { it.startDraw(canvas) } // 坐标轴绘制
+        dataRendererList.forEach { it.startDraw(canvas, paint, viewport, contentBounds) } // 数据绘制
     }
 
     /**
@@ -120,17 +125,11 @@ data class ChartPanel(val viewport: ChartViewport) {
      */
     fun setNewData(dataIndex: Int = 0, entryList: List<ChartEntry>) {
         val renderer = dataRendererList.getOrNull(dataIndex) ?: return
-        renderer.dataManager.setNewData(entryList)
+        renderer.setNewData(entryList)
 
-        // 更新最大索引
-        viewport.updateMaxIndex(renderer.dataManager.entryMaxIndex())
-        val startIndex = viewport.startIndex
-        val pointWidth = viewport.pointMaxWidth
-        renderer.dataManager.buildValueToPixelMatrix(contentBounds, startIndex, pointWidth)
-
-        axisList.forEach {
-            it.prepareToDraw()
-        }
+        viewport.updateMaxIndex(renderer.lastIndex()) // 更新最大索引
+        renderer.prepareToDraw(viewport, contentBounds)// 渲染器的准备工作
+        axisList.forEach { it.prepareToDraw() } // 坐标的准备工作
     }
 
     /**
@@ -139,25 +138,16 @@ data class ChartPanel(val viewport: ChartViewport) {
     fun getContentWidth() = contentBounds.width()
 
     /**
+     * 获取指定渲染器
+     */
+    fun getRenderer(index: Int) = dataRendererList.getOrNull(index)
+
+    /**
      * 取出 坐标轴[axisList] 所有 [AxisPosition.OUTSIDE] 的最大 axisSize
      */
     private fun getOutsideAxisSizes(): Map<AxisSide, Float> {
         return axisList
             .filter { it.axisPosition == AxisPosition.OUTSIDE } // 找出 [AxisPosition.OUTSIDE]
             .associate { it.axisSide to it.axisSize } // 把集合转成 map
-    }
-
-    /**
-     * 刷新索引范围。
-     */
-    private fun updateIndexRange() {
-        dataRendererList.forEach { renderer ->
-            // 更新最大索引
-            val dataManager = renderer.dataManager
-            viewport.updateMaxIndex(dataManager.entryMaxIndex())
-            val panelStartIndex = viewport.startIndex
-            val panelEndIndex = viewport.pointMaxWidth
-            dataManager.buildValueToPixelMatrix(contentBounds, panelStartIndex, panelEndIndex)
-        }
     }
 }

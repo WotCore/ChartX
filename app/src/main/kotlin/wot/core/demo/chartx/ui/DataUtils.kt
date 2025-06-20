@@ -1,6 +1,6 @@
 package wot.core.demo.chartx.ui
 
-import wot.core.view.chartx.model.ChartEntry
+import wot.core.view.chartx.model.data.ChartEntry
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale

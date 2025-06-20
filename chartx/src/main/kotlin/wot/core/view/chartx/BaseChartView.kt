@@ -6,9 +6,9 @@ import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
-import wot.core.view.chartx.model.ChartEntry
-import wot.core.view.chartx.model.ChartPanel
-import wot.core.view.chartx.model.ChartViewport
+import wot.core.view.chartx.model.data.ChartEntry
+import wot.core.view.chartx.model.panel.ChartPanel
+import wot.core.view.chartx.model.viewport.ChartViewport
 import wot.core.view.chartx.touch.GestureHandler
 import wot.core.view.chartx.touch.OnTouchListener
 
@@ -44,52 +44,15 @@ abstract class BaseChartView @JvmOverloads constructor(
     abstract fun createChartPanels(viewport: ChartViewport): MutableList<ChartPanel>
 
     /**
-     * 更新面板边界，并返回一个内容宽度。（因为涉及到坐标轴宽度，所以从这里获取）。
-     * @param chartPanelList 面板列表。
+     * 设置面板边界，并返回一个内容宽度。（因为涉及到坐标轴宽度，所以从这里获取）。
+     * @param panelList 面板列表。
      * @param viewWidth 控件宽度。
      * @param viewHeight 控件高度。
      * @return 返回一个内容宽度，提供给 [ChartViewport] 计算索引等。
      */
-    abstract fun updateChartPanelBounds(
-        chartPanelList: MutableList<ChartPanel>, viewWidth: Int, viewHeight: Int
+    abstract fun setPanelBounds(
+        panelList: MutableList<ChartPanel>, viewWidth: Int, viewHeight: Int
     ): Float
-
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        super.onSizeChanged(w, h, oldw, oldh)
-        // 更新面板边界
-        val contentWidth = updateChartPanelBounds(panelList, w, h)
-        viewport.setContentWidth(contentWidth)
-    }
-
-    override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
-        // 绘制元素
-        panelList.forEach { it.drawChartElements(canvas, paint) }
-    }
-
-    override fun onTouchEvent(event: MotionEvent): Boolean {
-        return gestureHandler.handleTouchEvent(event)
-    }
-
-    override fun onDown(x: Float, y: Float) {
-        accumulatedDeltaX = 0f
-    }
-
-    override fun onMove(x: Float, y: Float, deltaX: Float, deltaY: Float) {
-        accumulatedDeltaX += deltaX
-        val pointWidth = viewport.getPointRealWidth()
-        if (kotlin.math.abs(accumulatedDeltaX) >= pointWidth) {
-            val moveCount = (accumulatedDeltaX / pointWidth).toInt() // 计算移动的整点数
-            val moveDistance = moveCount * pointWidth // 计算实际移动的距离（整点数 × 点宽度）
-            viewport.panVisibleRange(moveCount)
-            invalidate()
-            accumulatedDeltaX -= moveDistance  // 减去已经消费的距离，保留剩余部分
-        }
-    }
-
-    override fun onUp(x: Float, y: Float) {
-        accumulatedDeltaX = 0f
-    }
 
     /**
      * 设置新数据
@@ -113,11 +76,10 @@ abstract class BaseChartView @JvmOverloads constructor(
      * @param panelIndex 画板索引
      * @param dataIndex 数据索引
      * @param dataList 数据列表
+     * @param invalidate 是否重绘
      */
     fun setNewData(
-        panelIndex: Int = 0,
-        dataIndex: Int = 0,
-        dataList: List<ChartEntry>,
+        panelIndex: Int = 0, dataIndex: Int = 0, dataList: List<ChartEntry>,
         invalidate: Boolean = true
     ) {
         val panel = panelList.getOrNull(panelIndex) ?: return
@@ -125,5 +87,56 @@ abstract class BaseChartView @JvmOverloads constructor(
         if (invalidate) {
             invalidate()
         }
+    }
+
+    /**
+     * 获取指定画板
+     */
+    fun getPanel(panelIndex: Int) = panelList.getOrNull(panelIndex)
+
+    /**
+     * 获取指定的渲染器
+     */
+    fun getRenderer(panelIndex: Int, rendererIndex: Int) =
+        getPanel(panelIndex)?.getRenderer(rendererIndex)
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        // 更新面板边界
+        val contentWidth = setPanelBounds(panelList, w, h)
+        viewport.setContentWidth(contentWidth)
+        panelList.forEach { it.prepareToDraw() } // 准备工作
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        panelList.forEach { it.startDraw(canvas, paint) } // 画板绘制内容
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        return gestureHandler.handleTouchEvent(event)
+    }
+
+    override fun onDown(x: Float, y: Float) {
+        accumulatedDeltaX = 0f
+    }
+
+    override fun onMove(x: Float, y: Float, deltaX: Float, deltaY: Float) {
+        accumulatedDeltaX += deltaX
+        val pointWidth = viewport.getPointRealWidth()
+        if (kotlin.math.abs(accumulatedDeltaX) >= pointWidth) {
+            val moveCount = (accumulatedDeltaX / pointWidth).toInt() // 计算移动的整点数
+            val moveDistance = moveCount * pointWidth // 计算实际移动的距离（整点数 × 点宽度）
+            viewport.panVisibleRange(moveCount)
+
+            panelList.forEach { it.prepareToDraw() }
+
+            invalidate()
+            accumulatedDeltaX -= moveDistance  // 减去已经消费的距离，保留剩余部分
+        }
+    }
+
+    override fun onUp(x: Float, y: Float) {
+        accumulatedDeltaX = 0f
     }
 }

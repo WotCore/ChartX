@@ -1,4 +1,4 @@
-package wot.core.view.chartx.model
+package wot.core.view.chartx.model.data
 
 /**
  * 数据 基类

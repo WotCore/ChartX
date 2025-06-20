@@ -6,7 +6,9 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.PathEffect
 import android.graphics.RectF
-import wot.core.view.chartx.axis.formatter.AxisLabelFormatter
+import wot.core.view.chartx.axis.formatter.IAxisLabelFormatter
+import wot.core.view.chartx.axis.formatter.XAxisLabelFormatter
+import wot.core.view.chartx.axis.formatter.YAxisLabelFormatter
 import wot.core.view.chartx.axis.model.AxisLabel
 import wot.core.view.chartx.axis.model.AxisLine
 import wot.core.view.chartx.axis.model.AxisPosition
@@ -29,7 +31,12 @@ class ChartAxis(
     var labelTextSize: Float = 30F
     var labelTextColor: Int = Color.parseColor("#333333")
 
-    var formatter: AxisLabelFormatter? = null
+    /**
+     * 图表轴值格式化
+     * [AxisSide.LEFT] or [AxisSide.RIGHT]] 使用 [YAxisLabelFormatter]
+     * [AxisSide.TOP] or [AxisSide.BOTTOM] 使用 [XAxisLabelFormatter]
+     */
+    var formatter: IAxisLabelFormatter? = null
 
     /**
      * 标签与轴之间的间距, 防止贴边。
@@ -62,6 +69,8 @@ class ChartAxis(
     var lineWidth = 3F
     var lineColor = Color.parseColor("#F0F0F0")
     private val lineList by lazy { mutableListOf<AxisLine>() }
+
+    private val buffer by lazy { FloatArray(2) }
 
     /**
      * 添加轴线
@@ -235,17 +244,22 @@ class ChartAxis(
             else -> axisBounds.left + horizontalMargin // 容错处理
         }
 
+        val yAxisLabelFormatter = formatter as? YAxisLabelFormatter
         val totalHeight = axisBounds.height()
         val bottom = axisBounds.bottom
         for (label in labelList) {
             val ratio = label.ratio
-            val value = totalHeight * ratio
-
+            val axisValue = totalHeight * ratio
             if (label.isNeedCalculateText()) {
-                label.text = formatter?.format(axisSide, axisPosition, value) ?: "$value"
+                label.text = if (yAxisLabelFormatter == null) {
+                    "$axisValue" // 兜底
+                } else {
+                    buffer[1] = axisValue
+                    yAxisLabelFormatter.format(axisSide, axisPosition, buffer[1])
+                }
             }
 
-            val y = bottom - value
+            val y = bottom - axisValue
             label.y = when {
                 ratio <= 0f -> y - descent            // 顶部对齐
                 ratio >= 1f -> y - ascent             // 底部对齐
@@ -262,12 +276,21 @@ class ChartAxis(
     private fun prepareXLabels() {
         paint.textSize = labelTextSize
 
+        val xAxisLabelFormatter = formatter as? XAxisLabelFormatter
         val y = paint.centerY(axisBounds)
         labelList.forEach {
             val ratio = it.ratio
             val axisValue = axisBounds.width() * ratio
             if (it.isNeedCalculateText()) {
-                it.text = formatter?.format(axisSide, axisPosition, axisValue) ?: "$axisValue"
+                it.text = if (xAxisLabelFormatter == null) {
+                    "$axisValue" // 兜底
+                } else {
+                    buffer[0] = axisValue
+                    val dataRenderer = xAxisLabelFormatter.provideDataRenderer()
+                    dataRenderer.toData(buffer)
+                    val value = dataRenderer.entryAt(buffer[0].toInt())?.xValue.orEmpty()
+                    xAxisLabelFormatter.format(axisSide, axisPosition, value)
+                }
             }
             it.x = axisBounds.left + axisValue
             it.x = when {
