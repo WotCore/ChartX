@@ -49,13 +49,12 @@ interface OnScaleListener {
 
     /**
      * 双指缩放时持续触发，返回缩放比例。
-     * 可用于缩放图片、地图、视图等。
      *
-     * @param scaleFactor 当前缩放比例（>1 放大，<1 缩小）
+     * @param scale 当前这次手势缩放相对于上一次的“缩放变化百分比”
      * @param focusX 两指中点的 X 坐标（用于以该点为中心缩放）
      * @param focusY 两指中点的 Y 坐标
      */
-    fun onScale(scaleFactor: Float, focusX: Float, focusY: Float) {}
+    fun onScale(scale: Float, focusX: Float, focusY: Float) {}
 }
 
 /**

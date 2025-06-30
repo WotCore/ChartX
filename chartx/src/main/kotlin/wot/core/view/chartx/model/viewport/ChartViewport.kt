@@ -28,19 +28,32 @@ class ChartViewport {
         private set
 
     /**
-     * 图表内容宽
-     */
-    private var contentWidth: Float = 0F
-
-    /**
      * 点的真实宽度
      */
     val pointRealWidth: Float
         get() = contentWidth / (pageSize - 1)
 
+    /**
+     * 最小缩放比例
+     */
+    var minScaleX = 0.052f
+
+    /**
+     * 最大缩放比例
+     */
+    var maxScaleX = 2.0f
+
+    private var scaleX = 1F
+
+    /**
+     * 图表内容宽
+     */
+    private var contentWidth: Float = 0F
+
+
     fun setContentWidth(contentWidth: Float) {
         this.contentWidth = contentWidth
-        calcMaxVisiblePoints()
+        calcPageSize()
         checkIndex()
     }
 
@@ -64,7 +77,7 @@ class ChartViewport {
     }
 
     /**
-     * 根据用户在图表中的水平滑动距离，平移当前可见的数据范围。
+     * 平移视图
      *
      * - 向右滑动（moveX > 0）：查看更早的数据，前移数据窗口。
      * - 向左滑动（moveX < 0）：查看更新的数据，后移数据窗口。
@@ -73,12 +86,12 @@ class ChartViewport {
      *
      * @param moveX 水平方向滑动的距离（单位：像素）
      */
-    fun panVisibleRange(moveX: Float) {
-        panVisibleRange((moveX / pointMaxWidth).toInt())
+    fun move(moveX: Float) {
+        move((moveX / pointMaxWidth).toInt())
     }
 
     /**
-     * 平移当前可见的数据范围。
+     * 平移视图
      *
      * - 向右滑动（moveCount > 0）：查看更早的数据，前移数据窗口。
      * - 向左滑动（moveCount < 0）：查看更新的数据，后移数据窗口。
@@ -87,7 +100,7 @@ class ChartViewport {
      *
      * @param moveCount 移动点数
      */
-    fun panVisibleRange(moveCount: Int) {
+    fun move(moveCount: Int) {
         if (moveCount > 0) {
             // 向右滑动，显示更早的数据
             startIndex = (startIndex - moveCount).coerceAtLeast(0)
@@ -100,10 +113,30 @@ class ChartViewport {
     }
 
     /**
-     * 计算最大可见点数
+     * 缩放视图
      */
-    private fun calcMaxVisiblePoints() {
-        pageSize = (contentWidth / pointMaxWidth).roundToInt()
+    fun zoom(scale: Float) {
+        scaleX *= (1 + scale)
+        if (scaleX < minScaleX) {
+            scaleX = minScaleX
+        } else if (scaleX > maxScaleX) {
+            scaleX = maxScaleX
+        }
+        calcPageSize()
+        if (scale < 0 && startIndex == 0) {
+            // 起始索引为0缩小时重新计算结束索引
+            calcEndIndex()
+        } else {
+            // 放大时当前显示数据的结束索引保存不变
+            calcStartIndex()
+        }
+    }
+
+    /**
+     * 计算一页可展示的点数
+     */
+    private fun calcPageSize() {
+        pageSize = (contentWidth / (pointMaxWidth * scaleX)).roundToInt()
     }
 
     /**

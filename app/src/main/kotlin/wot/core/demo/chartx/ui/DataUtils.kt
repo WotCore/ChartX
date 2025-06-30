@@ -42,7 +42,7 @@ object DataUtils {
     }
 
     fun chatData1(
-        times: Int = 10,
+        times: Int = 20,
     ): MutableList<ChartEntry> {
         val dataList = mutableListOf<ChartEntry>()
         for (i in 0 until times) {

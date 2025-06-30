@@ -12,6 +12,7 @@ import wot.core.view.chartx.model.data.ChartEntry
 import wot.core.view.chartx.model.panel.ChartPanel
 import wot.core.view.chartx.model.viewport.ChartViewport
 import wot.core.view.chartx.touch.GestureHandler
+import wot.core.view.chartx.touch.OnScaleListener
 import wot.core.view.chartx.touch.OnTouchListener
 import kotlin.math.abs
 
@@ -25,13 +26,14 @@ import kotlin.math.abs
  */
 abstract class BaseChartView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
-) : View(context, attrs, defStyleAttr), OnTouchListener {
+) : View(context, attrs, defStyleAttr), OnTouchListener, OnScaleListener {
 
     private val viewport by lazy { ChartViewport() }
 
     private val gestureHandler by lazy {
         GestureHandler().apply {
             onTouchListener = this@BaseChartView
+            onScaleListener = this@BaseChartView
         }
     }
 
@@ -108,7 +110,7 @@ abstract class BaseChartView @JvmOverloads constructor(
         // 更新面板边界
         val contentWidth = setPanelBounds(panelList, w, h)
         viewport.setContentWidth(contentWidth)
-        panelList.forEach { it.prepareToDraw() } // 准备工作
+        prepareToDraw()
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -134,9 +136,9 @@ abstract class BaseChartView @JvmOverloads constructor(
         if (abs(accumulatedDeltaX) >= pointWidth) {
             val moveCount = (accumulatedDeltaX / pointWidth).toInt() // 计算移动的整点数
             val moveDistance = moveCount * pointWidth // 计算实际移动的距离（整点数 × 点宽度）
-            viewport.panVisibleRange(moveCount)
+            viewport.move(moveCount)
 
-            panelList.forEach { it.prepareToDraw() }
+            prepareToDraw()
 
             invalidate()
             accumulatedDeltaX -= moveDistance  // 减去已经消费的距离，保留剩余部分
@@ -145,5 +147,21 @@ abstract class BaseChartView @JvmOverloads constructor(
 
     override fun onUp(x: Float, y: Float) {
         accumulatedDeltaX = 0f
+    }
+
+    // ========== OnScaleListener =========
+
+    override fun onScale(scale: Float, focusX: Float, focusY: Float) {
+        Logcat.i("onScale: scaleFactor=$scale, focusX=$focusX, focusY=$focusY")
+        viewport.zoom(scale)
+        prepareToDraw()
+        invalidate()
+    }
+
+    /**
+     * 准备工作
+     */
+    private fun prepareToDraw() {
+        panelList.forEach { it.prepareToDraw() }
     }
 }

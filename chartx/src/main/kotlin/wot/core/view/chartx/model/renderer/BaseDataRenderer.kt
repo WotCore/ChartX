@@ -63,7 +63,11 @@ abstract class BaseDataRenderer {
      */
     fun prepareToDraw(viewport: ChartViewport, contentRect: RectF) {
         val startIndex = viewport.startIndex
+        val endIndex = viewport.endIndex
         val pointWidth = viewport.pointRealWidth
+
+        dataSet.computeYBounds(startIndex, endIndex)
+
         val yMin = dataSet.yMin
         val yRange = dataSet.yRange
         valueMapper.buildMatrix(contentRect, startIndex, pointWidth, yMin, yRange) // 坐标映射

@@ -1,6 +1,7 @@
 package wot.core.view.chartx.model.data
 
 import wot.core.view.chartx.ext.minMaxInRangeByFloat
+import kotlin.math.min
 
 /**
  * 图表数据管理器（负责数据的收集与最值计算）
@@ -14,10 +15,8 @@ class ChartDataSet {
     val entryList: List<ChartEntry> get() = _entryList
 
     var yMin: Float = Float.MAX_VALUE
-
         private set
     var yMax: Float = Float.MIN_VALUE
-
         private set
 
     val yRange: Float
@@ -26,7 +25,6 @@ class ChartDataSet {
     fun setNewData(newEntries: List<ChartEntry>) {
         _entryList.clear()
         _entryList.addAll(newEntries)
-        computeYBounds()
     }
 
     fun entryCount() = _entryList.size
@@ -35,8 +33,12 @@ class ChartDataSet {
 
     fun lastIndex() = entryCount() - 1
 
-    private fun computeYBounds() {
-        val minMax = _entryList.minMaxInRangeByFloat(0, _entryList.lastIndex) { it.yValue }
+    /**
+     * 计算 Y 边界值
+     */
+    fun computeYBounds(startIndex: Int, endIndex: Int) {
+        val end = min(endIndex, lastIndex())
+        val minMax = _entryList.minMaxInRangeByFloat(startIndex, end) { it.yValue }
         if (minMax == null) {
             yMin = Float.MAX_VALUE
             yMax = Float.MIN_VALUE

@@ -19,24 +19,15 @@ class GestureHandler {
     var onDoubleTapListener: OnDoubleTapListener? = null
     var onLongPressListener: OnLongPressListener? = null
 
-    /**
-     * 最小缩放比例
-     */
-    var minScale = 0.5f
-
-    /**
-     * 最大缩放比例
-     */
-    var maxScale = 3.0f
-
     private var lastX = 0f
     private var lastY = 0f
 
     private var isScaling = false
 
+    private var scaleFactor = 1.5F // 缩放比例因子，增加缩放跨度
     private var pointerId1 = -1
     private var pointerId2 = -1
-    private var initialDistance = 0f
+    private var lastPointDist = 0f // 当前两个点的距离
 
     private val doubleTapTimeout = 300L
     private var lastTapTime = 0L
@@ -77,47 +68,11 @@ class GestureHandler {
                     val y1 = event.getY(0)
                     val x2 = event.getX(1)
                     val y2 = event.getY(1)
-                    initialDistance = distance(x1, y1, x2, y2)
+                    lastPointDist = distance(x1, y1, x2, y2)
                 }
             }
 
-            MotionEvent.ACTION_MOVE -> {
-                if (isScaling && event.pointerCount >= 2) {
-                    val index1 = event.findPointerIndex(pointerId1)
-                    val index2 = event.findPointerIndex(pointerId2)
-                    if (index1 != -1 && index2 != -1) {
-                        val x1 = event.getX(index1)
-                        val y1 = event.getY(index1)
-                        val x2 = event.getX(index2)
-                        val y2 = event.getY(index2)
-                        val newDist = distance(x1, y1, x2, y2)
-                        if (initialDistance > 0) {
-                            var scaleFactor = newDist / initialDistance
-                            if (scaleFactor < minScale) scaleFactor = minScale
-                            if (scaleFactor > maxScale) scaleFactor = maxScale
-
-                            val focusX = (x1 + x2) / 2
-                            val focusY = (y1 + y2) / 2
-                            onScaleListener?.onScale(scaleFactor, focusX, focusY)
-                        }
-                    }
-                } else if (!isScaling) {
-                    val x = event.x
-                    val y = event.y
-                    val deltaX = x - lastX
-                    val deltaY = y - lastY
-
-                    if (!isLongPressTriggered) {
-                        // 不再检测最小移动距离，直接移除长按回调
-                        handler.removeCallbacks(longPressRunnable)
-                    }
-
-                    onTouchListener?.onMove(x, y, deltaX, deltaY)
-
-                    lastX = x
-                    lastY = y
-                }
-            }
+            MotionEvent.ACTION_MOVE -> handleMove(event)
 
             MotionEvent.ACTION_POINTER_UP -> {
                 if (isScaling) {
@@ -160,6 +115,55 @@ class GestureHandler {
         return true
     }
 
+    private fun handleMove(event: MotionEvent) {
+        if (isScaling && event.pointerCount >= 2) {
+            zoom(event)
+        } else if (!isScaling) {
+            val x = event.x
+            val y = event.y
+            val deltaX = x - lastX
+            val deltaY = y - lastY
+
+            if (!isLongPressTriggered) {
+                // 不再检测最小移动距离，直接移除长按回调
+                handler.removeCallbacks(longPressRunnable)
+            }
+
+            onTouchListener?.onMove(x, y, deltaX, deltaY)
+
+            lastX = x
+            lastY = y
+        }
+    }
+
+    /**
+     * 缩放
+     */
+    private fun zoom(event: MotionEvent) {
+        val index1 = event.findPointerIndex(pointerId1)
+        if (index1 == -1) return
+        val index2 = event.findPointerIndex(pointerId2)
+        if (index2 == -1) return
+
+        val x1 = event.getX(index1)
+        val y1 = event.getY(index1)
+        val x2 = event.getX(index2)
+        val y2 = event.getY(index2)
+        val pointDist = distance(x1, y1, x2, y2)
+
+        val scale = pointDist / lastPointDist
+        if (scale > 1 || scale < 1) {
+            val focusX = (x1 + x2) / 2
+            val focusY = (y1 + y2) / 2
+            onScaleListener?.onScale(scaleFactor * (scale - 1), focusX, focusY)
+        }
+
+        lastPointDist = pointDist
+    }
+
+    /**
+     * 计算两点之间的距离
+     */
     private fun distance(x1: Float, y1: Float, x2: Float, y2: Float): Float {
         return hypot(x2 - x1, y2 - y1)
     }

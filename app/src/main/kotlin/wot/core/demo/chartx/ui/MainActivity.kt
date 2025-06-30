@@ -21,10 +21,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun MainActivityBinding.initView() {
         sampleChatView.apply {
-            val third = DataUtils.chatData1()
+            val third = DataUtils.chatData()
             setNewData(
                 Triple(0, 0, third),
-                Triple(0, 1, DataUtils.chatData1()),
+                Triple(0, 1, DataUtils.chatData()),
             )
         }
     }

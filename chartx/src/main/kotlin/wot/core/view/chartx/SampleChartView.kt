@@ -53,7 +53,7 @@ class SampleChartView(context: Context, attrs: AttributeSet? = null) :
                             override fun format(
                                 axisSide: AxisSide, axisPosition: AxisPosition, axisValue: Float
                             ): String {
-                                return "$axisValue"
+                                return String.format("%.2f", axisValue)
                             }
                         }
                     },
